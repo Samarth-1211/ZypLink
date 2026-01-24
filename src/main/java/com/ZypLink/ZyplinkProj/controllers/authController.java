@@ -1,0 +1,32 @@
+package com.ZypLink.ZyplinkProj.controllers;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ZypLink.ZyplinkProj.dto.AuthResponseDTO;
+import com.ZypLink.ZyplinkProj.dto.LoginRequestDTO;
+import com.ZypLink.ZyplinkProj.dto.UserDTO;
+import com.ZypLink.ZyplinkProj.services.authService;
+
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequiredArgsConstructor
+public class authController {
+    
+    private final authService service;
+
+    @PostMapping("/register")
+    public ResponseEntity<String> registerUser(@RequestBody UserDTO userDTO) {
+        service.registerUSer(userDTO);
+        return ResponseEntity.ok("User registered successfully");
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponseDTO> loginUser(@RequestBody LoginRequestDTO request) {
+        return ResponseEntity.ok(service.loginUser(request));
+    }
+
+}
