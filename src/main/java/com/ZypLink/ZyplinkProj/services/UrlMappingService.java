@@ -81,6 +81,9 @@ public class UrlMappingService {
             .stream()
             .map(entity -> mapper.map(entity, UrlMappingDTO.class))
             .collect(Collectors.toList());
+
+        // return urlMappingRepo.findByUser(user).stream().map(this::convertToDto()).collect(Collectors.toList());
     }
 
+   
 }

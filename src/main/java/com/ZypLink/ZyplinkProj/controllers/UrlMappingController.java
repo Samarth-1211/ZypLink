@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,7 +32,7 @@ public class UrlMappingController {
        // More Advance Way can be Ask User for custom length of short Url
     }
 
-    @PostMapping("/myUrls")
+    @GetMapping("/myUrls")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<UrlMappingDTO>> getAllUrls(Principal principal){
         List<UrlMappingDTO> urls = service.getAllUrlsForUser(principal);
