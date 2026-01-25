@@ -1,6 +1,6 @@
 package com.ZypLink.ZyplinkProj.entities;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.Entity;
@@ -30,7 +30,7 @@ public class UrlMapping {
     private String originalUrl;
     private String shortUrl;
     private int clickCount = 0;
-    private LocalDate createdAt = LocalDate.now();
+    private LocalDateTime createdAt;
     
     @ManyToOne
     @JoinColumn(name="user_id")

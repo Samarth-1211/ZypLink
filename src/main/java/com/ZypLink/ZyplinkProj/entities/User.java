@@ -2,8 +2,6 @@ package com.ZypLink.ZyplinkProj.entities;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -35,7 +33,7 @@ public class User implements UserDetails {
     private String email;
     private String password;
     private String name;
-    private String role = "ROLE_USER";
+    private String role;
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -49,7 +47,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return this.email;
+        return this.name;
 
     }
 

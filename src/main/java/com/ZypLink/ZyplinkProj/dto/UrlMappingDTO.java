@@ -1,6 +1,6 @@
 package com.ZypLink.ZyplinkProj.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.ZypLink.ZyplinkProj.entities.ClickEvents;
@@ -21,8 +21,8 @@ public class UrlMappingDTO {
     private Long id;
     private String originalUrl;
     private String shortUrl;
-    private int clickCount = 0;
-    private LocalDate createdAt = LocalDate.now();
+    private int clickCount ;
+    private LocalDateTime createdAt;
     
  
     private User user;

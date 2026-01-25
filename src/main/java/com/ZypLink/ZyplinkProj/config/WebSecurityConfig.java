@@ -25,6 +25,11 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterchain(HttpSecurity http){
     http
         .csrf(csrfConfig -> csrfConfig.disable())
+        .authorizeHttpRequests(auth->auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/urls/**").authenticated()
+                .requestMatchers("/{shortUrl}").permitAll()
+        )
         .sessionManagement(sessionConfig -> sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .addFilterBefore(JwtAuthFilter , UsernamePasswordAuthenticationFilter.class);
     return http.build();
