@@ -2,8 +2,10 @@ package com.ZypLink.ZyplinkProj.services;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -49,8 +51,9 @@ public class UrlMappingService {
         entity.setClickCount(0);
         entity.setCreatedAt(LocalDateTime.now());
 
-        return mapper.map(urlMappingRepo.save(entity), UrlMappingDTO.class);
-
+        UrlMappingDTO dto = mapper.map(urlMappingRepo.save(entity), UrlMappingDTO.class);
+        dto.setUserId(user.get().getId());
+        return dto;
     }
 
     private String generateShortUrl(String orignalUrl) {
@@ -66,6 +69,18 @@ public class UrlMappingService {
 
         return shortUrl.toString();
 
+    }
+
+    public List<UrlMappingDTO> getAllUrlsForUser(Principal principal) {
+        User user = userrepo.findByEmail(principal.getName()).orElse(null);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found with email: " + principal.getName());
+        }
+        return urlMappingRepo
+            .findByUser(user)
+            .stream()
+            .map(entity -> mapper.map(entity, UrlMappingDTO.class))
+            .collect(Collectors.toList());
     }
 
 }

@@ -1,6 +1,7 @@
 package com.ZypLink.ZyplinkProj.controllers;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,15 @@ public class UrlMappingController {
         return ResponseEntity.ok(service.shortTheUrl(UrlContent , principal));
        // More Advance Way can be Ask User for custom length of short Url
     }
-    
-    
-}
+
+    @PostMapping("/myUrls")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<UrlMappingDTO>> getAllUrls(Principal principal){
+        List<UrlMappingDTO> urls = service.getAllUrlsForUser(principal);
+        return ResponseEntity.ok(urls);
+    }
+
+
+    }
+
+

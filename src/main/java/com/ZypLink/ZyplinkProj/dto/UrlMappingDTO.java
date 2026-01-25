@@ -25,7 +25,7 @@ public class UrlMappingDTO {
     private LocalDateTime createdAt;
     
  
-    private User user;
+    private Long userId;
 
     private List<ClickEvents> clickEvents;
 
