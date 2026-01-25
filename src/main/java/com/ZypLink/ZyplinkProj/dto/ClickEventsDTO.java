@@ -17,5 +17,5 @@ public class ClickEventsDTO {
   
     private Long id;
     private LocalDateTime clickDate;
-    private UrlMapping urlMapping;
+    private Long clickCounts;
 }
