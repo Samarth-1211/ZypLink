@@ -5,8 +5,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.cglib.core.Local;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,12 +20,14 @@ import com.ZypLink.ZyplinkProj.dto.ClickEventsDTO;
 import com.ZypLink.ZyplinkProj.dto.UrlMappingDTO;
 import com.ZypLink.ZyplinkProj.services.UrlMappingService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/api/urls")
+@Tag(name = "URL Management", description = "Shorten & Analyse URLs")
 public class UrlMappingController {
 
     private final UrlMappingService service;
@@ -64,6 +64,8 @@ public class UrlMappingController {
         Map<LocalDate, Long> clicksByDate = service.getTotalClicksByDate(principal, startDate, endDate);
         return ResponseEntity.ok(clicksByDate);
     }
+
+
 
 }
 

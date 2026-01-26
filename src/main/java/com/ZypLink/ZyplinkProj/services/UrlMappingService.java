@@ -3,6 +3,7 @@ package com.ZypLink.ZyplinkProj.services;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.ZypLink.ZyplinkProj.dto.ClickEventsDTO;
 import com.ZypLink.ZyplinkProj.dto.UrlMappingDTO;
+import com.ZypLink.ZyplinkProj.entities.ClickEvents;
 import com.ZypLink.ZyplinkProj.entities.UrlMapping;
 import com.ZypLink.ZyplinkProj.entities.User;
 import com.ZypLink.ZyplinkProj.repositories.ClickEventsRepository;
@@ -93,12 +95,21 @@ public class UrlMappingService {
         if (mapping == null) {
             throw new IllegalArgumentException("Invalid short URL: " + shortUrl);
         }
+
+        // Fetch click events for the specific URL and date range
         log.info("Fetching click events for URL: {}", shortUrl);
-        return clickEventsService.findByUrlMappingAndClickDateBetween(mapping, startDate, endDate)
-            .stream()
-            .map(entity -> mapper.map(entity, ClickEventsDTO.class))
-            .collect(Collectors.toList());
-    }
+        
+        List<ClickEvents> clickEvents = clickEventsService.findByUrlMappingAndClickDateBetween(mapping, startDate, endDate);
+        List<ClickEventsDTO> clickEventsDTOs = new ArrayList<>();
+        for (ClickEvents event : clickEvents) {
+            ClickEventsDTO dto = new ClickEventsDTO();
+            dto.setId(event.getId());
+            dto.setClickDate(event.getClickDate());
+            dto.setClickCounts(event.getUrlMapping().getClickCount());
+            clickEventsDTOs.add(dto);  
+        }
+        return clickEventsDTOs;
+}
 
     public Map<LocalDate, Long> getTotalClicksByDate(Principal principal, LocalDate startDate, LocalDate endDate) {
     
@@ -115,5 +126,22 @@ public class UrlMappingService {
     
     }
 
-   
+    public String RedirectToOriginalUrl(String shortUrl) {
+      UrlMapping urlmapping =  urlMappingRepo.findByShortUrl(shortUrl);
+      if(urlmapping!=null){
+        urlmapping.setClickCount(urlmapping.getClickCount() + 1);
+        urlMappingRepo.save(urlmapping);
+        log.info("Recording click event for URL: {}", shortUrl);
+        // Record Click Event
+        ClickEvents clickEvents = new ClickEvents();
+        clickEvents.setClickDate(LocalDateTime.now());
+        clickEvents.setUrlMapping(urlmapping);
+        clickEventsService.save(clickEvents);
+
+      
+        return urlmapping.getOriginalUrl();
+      }else throw new IllegalArgumentException("Short URL not found: " + shortUrl);
+    }
+
+
 }

@@ -20,23 +20,28 @@ import lombok.RequiredArgsConstructor;
 public class WebSecurityConfig {
 
     private final JwtAuthFilter JwtAuthFilter;
-    
-    @Bean 
-    public SecurityFilterChain filterchain(HttpSecurity http){
-    http
-        .csrf(csrfConfig -> csrfConfig.disable())
-        .authorizeHttpRequests(auth->auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/urls/**").authenticated()
-                .requestMatchers("/{shortUrl}").permitAll()
-        )
-        .sessionManagement(sessionConfig -> sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .addFilterBefore(JwtAuthFilter , UsernamePasswordAuthenticationFilter.class);
-    return http.build();
+
+    @Bean
+    public SecurityFilterChain filterchain(HttpSecurity http) {
+        http
+                .csrf(csrfConfig -> csrfConfig.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/internal/docs/**",
+                                "/internal/api-docs/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**")
+                        .permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/urls/**").authenticated()
+                        .requestMatchers("/{shortUrl}").permitAll())
+                .sessionManagement(
+                        sessionConfig -> sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(JwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
     }
 
-
-    @Bean 
+    @Bean
     AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }

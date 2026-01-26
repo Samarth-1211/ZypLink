@@ -11,11 +11,13 @@ import com.ZypLink.ZyplinkProj.dto.LoginRequestDTO;
 import com.ZypLink.ZyplinkProj.dto.UserDTO;
 import com.ZypLink.ZyplinkProj.services.authService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController()
 @RequiredArgsConstructor
 @RequestMapping(path = "/api/auth")
+@Tag(name = "Authentication", description = "User Registration & Login")
 public class authController {
     
     private final authService service;
