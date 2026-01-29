@@ -14,10 +14,12 @@ import com.ZypLink.ZyplinkProj.repositories.UserRepository;
 import com.ZypLink.ZyplinkProj.utils.JwtUtils;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class authService {
 
     private final UserRepository userRepository;
@@ -53,7 +55,11 @@ public class authService {
             )
         );
         User user = (User)authenticated.getPrincipal();
+        log.info("User authenticated: {}", user.getEmail());
+
         String AccessToken = jwtservice.createAccessToken(user);
+        log.info("Access Token: {}", AccessToken);
+        System.out.println("Access Token: " + AccessToken);
         return new AuthResponseDTO(user.getId(), AccessToken);
 
 

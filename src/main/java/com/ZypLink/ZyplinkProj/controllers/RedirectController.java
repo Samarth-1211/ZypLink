@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/r")
+@RequestMapping("/")
 @RequiredArgsConstructor
 @Tag(name = "URL Redirect", description = "Works as URL Redirector")
 public class RedirectController {
