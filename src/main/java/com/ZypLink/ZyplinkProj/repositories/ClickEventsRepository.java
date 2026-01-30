@@ -17,4 +17,6 @@ public interface ClickEventsRepository extends JpaRepository<ClickEvents,Long>{
     // To get Url click events of all the url mappings for a user between date range
     List<ClickEvents> findByUrlMappingInAndClickDateBetween(List<UrlMapping> mappings , LocalDateTime startDateTime, LocalDateTime endDateTime);
 
+    void deleteByUrlMapping(UrlMapping urlMapping);
+
 }

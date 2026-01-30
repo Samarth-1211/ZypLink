@@ -7,11 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ZypLink.ZyplinkProj.dto.ClickEventsDTO;
 import com.ZypLink.ZyplinkProj.dto.UrlMappingDTO;
@@ -28,14 +31,19 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+
 public class UrlMappingService {
 
     private final UserRepository userrepo;
     private final UrlMappingRepository urlMappingRepo;
     private final ModelMapper mapper;
-    private final ClickEventsRepository clickEventsService;
+    private final ClickEventsRepository clickEventsRepo;
+    private final ClickEventService clickEventService;
+    private static final Pattern CUSTOM_SLUG_PATTERN = Pattern.compile("^[a-zA-Z0-9-_]{3,40}$");
+    private static final Set<String> RESERVED_PATHS = Set.of(
+            "api", "admin", "login", "logout", "swagger", "v3", "health");
 
-    // Url Shorting Logic
+    // Helper methods -----------------------------------
     public UrlMappingDTO shortTheUrl(Map<String, String> urlContent, Principal principal) {
         // --- Logic to get and check the Url Content and get User
         Optional<User> user = userrepo.findByEmail(principal.getName());
@@ -62,6 +70,38 @@ public class UrlMappingService {
         return dto;
     }
 
+    private String normalizeOriginalUrl(String url) {
+        url = url.trim();
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            return "https://" + url;
+        }
+        return url;
+    }
+
+    private String validateCustomSlug(String input) {
+
+        input = input.trim();
+
+        if (input.contains("http") || input.contains(".") || input.contains("/")) {
+            throw new IllegalArgumentException(
+                    "Custom URL must only be a name, not a full URL");
+        }
+
+        if (!CUSTOM_SLUG_PATTERN.matcher(input).matches()) {
+            throw new IllegalArgumentException(
+                    "Custom URL can contain only letters, numbers, '-' and '_'");
+        }
+
+        String slug = input.toLowerCase();
+
+        if (RESERVED_PATHS.contains(slug)) {
+            throw new IllegalArgumentException("This URL name is reserved");
+        }
+
+        return slug;
+    }
+
+    // Custom Methods-----------------------------------
     private String generateShortUrl(String orignalUrl) {
         String chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder shortUrl = new StringBuilder();
@@ -75,22 +115,23 @@ public class UrlMappingService {
 
     public List<UrlMappingDTO> getAllUrlsForUser(Principal principal) {
         User user = userrepo.findByEmail(principal.getName()).orElse(null);
-        log.info("Fetching URLs for user: {}", user); 
+        log.info("Fetching URLs for user: {}", user);
         if (user == null) {
             throw new UsernameNotFoundException("User not found with email: " + principal.getName());
         }
         return urlMappingRepo
-            .findByUser(user)
-            .stream()
-            .map(entity -> mapper.map(entity, UrlMappingDTO.class))
-            .collect(Collectors.toList());
+                .findByUser(user)
+                .stream()
+                .map(entity -> mapper.map(entity, UrlMappingDTO.class))
+                .collect(Collectors.toList());
 
-        // return urlMappingRepo.findByUser(user).stream().map(this::convertToDto()).collect(Collectors.toList());
+        // return
+        // urlMappingRepo.findByUser(user).stream().map(this::convertToDto()).collect(Collectors.toList());
     }
 
     public List<ClickEventsDTO> getClickEventsForUrl(String shortUrl, LocalDateTime startDate, LocalDateTime endDate) {
-        //StartDate format --> 
-       
+        // StartDate format -->
+
         UrlMapping mapping = urlMappingRepo.findByShortUrl(shortUrl);
         if (mapping == null) {
             throw new IllegalArgumentException("Invalid short URL: " + shortUrl);
@@ -98,78 +139,118 @@ public class UrlMappingService {
 
         // Fetch click events for the specific URL and date range
         log.info("Fetching click events for URL: {}", shortUrl);
-        
-        List<ClickEvents> clickEvents = clickEventsService.findByUrlMappingAndClickDateBetween(mapping, startDate, endDate);
+
+        List<ClickEvents> clickEvents = clickEventsRepo.findByUrlMappingAndClickDateBetween(mapping, startDate,
+                endDate);
         List<ClickEventsDTO> clickEventsDTOs = new ArrayList<>();
         for (ClickEvents event : clickEvents) {
             ClickEventsDTO dto = new ClickEventsDTO();
             dto.setId(event.getId());
             dto.setClickDate(event.getClickDate());
             dto.setClickCounts(event.getUrlMapping().getClickCount());
-            clickEventsDTOs.add(dto);  
+            clickEventsDTOs.add(dto);
         }
         return clickEventsDTOs;
-}
+    }
 
     public Map<LocalDate, Long> getTotalClicksByDate(Principal principal, LocalDate startDate, LocalDate endDate) {
-    
-            User user = userrepo.findByEmail(principal.getName()).orElse(null);
-            if (user == null) {
-                throw new UsernameNotFoundException("User not found with email: " + principal.getName());
-            }
-            List<UrlMapping> userUrls = urlMappingRepo.findByUser(user);
-            return clickEventsService.findByUrlMappingInAndClickDateBetween(userUrls, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay()).stream()
+
+        User user = userrepo.findByEmail(principal.getName()).orElse(null);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found with email: " + principal.getName());
+        }
+        List<UrlMapping> userUrls = urlMappingRepo.findByUser(user);
+        return clickEventsRepo
+                .findByUrlMappingInAndClickDateBetween(userUrls, startDate.atStartOfDay(),
+                        endDate.plusDays(1).atStartOfDay())
+                .stream()
                 .collect(Collectors.groupingBy(
-                    clickEvent -> clickEvent.getClickDate().toLocalDate(),
-                    Collectors.counting()
-                ));
-    
+                        clickEvent -> clickEvent.getClickDate().toLocalDate(),
+                        Collectors.counting()));
+
     }
 
     public String RedirectToOriginalUrl(String shortUrl) {
-      UrlMapping urlmapping =  urlMappingRepo.findByShortUrl(shortUrl);
-      if(urlmapping!=null){
-        urlmapping.setClickCount(urlmapping.getClickCount() + 1);
-        urlMappingRepo.save(urlmapping);
-        log.info("Recording click event for URL: {}", shortUrl);
-        // Record Click Event
-        ClickEvents clickEvents = new ClickEvents();
-        clickEvents.setClickDate(LocalDateTime.now());
-        clickEvents.setUrlMapping(urlmapping);
-        clickEventsService.save(clickEvents);
+        UrlMapping urlmapping = urlMappingRepo.findByShortUrl(shortUrl);
+        if (urlmapping != null) {
+            urlmapping.setClickCount(urlmapping.getClickCount() + 1);
+            urlMappingRepo.save(urlmapping);
+            log.info("Recording click event for URL: {}", shortUrl);
+            // Record Click Event
+            ClickEvents clickEvents = new ClickEvents();
+            clickEvents.setClickDate(LocalDateTime.now());
+            clickEvents.setUrlMapping(urlmapping);
+            clickEventsRepo.save(clickEvents);
 
-      
-        return urlmapping.getOriginalUrl();
-      }else throw new IllegalArgumentException("Short URL not found: " + shortUrl);
+            return urlmapping.getOriginalUrl();
+        } else
+            throw new IllegalArgumentException("Short URL not found: " + shortUrl);
     }
 
     public String deleteUrlMapping(String shortUrl, Principal principal) {
-       String email = principal.getName();
-       User user = userrepo.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-       UrlMapping urlMapping = urlMappingRepo.findByShortUrl(shortUrl);
-         if(urlMapping == null){
-          throw new IllegalArgumentException("Short URL not found: " + shortUrl);
-         }
-            if(!urlMapping.getUser().getId().equals(user.getId())){
+        String email = principal.getName();
+        User user = userrepo.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+        UrlMapping urlMapping = urlMappingRepo.findByShortUrl(shortUrl);
+
+        clickEventService.DeleteClickEventByUrlmapping(urlMapping); // Delete associated click events first
+
+        if (urlMapping == null) {
+            throw new IllegalArgumentException("Short URL not found: " + shortUrl);
+        }
+        if (!urlMapping.getUser().getId().equals(user.getId())) {
             throw new SecurityException("You are not authorized to delete this URL mapping");
-            }
+        }
         urlMappingRepo.delete(urlMapping);
         return "URL Mapping Deleted Successfully";
     }
 
-    
-    public UrlMappingDTO updateUrlMapping(String shortUrl, Map<String,String> urlContent, Principal principal) {
-       UrlMapping urlMapping = urlMappingRepo.findByShortUrl(shortUrl);
-         if(urlMapping == null){
-          throw new IllegalArgumentException("Short URL not found: " + shortUrl);
-         }
+    public UrlMappingDTO updateOrignalUrl(String shortUrl, Map<String, String> urlContent, Principal principal) {
+        UrlMapping urlMapping = urlMappingRepo.findByShortUrl(shortUrl);
+        if (urlMapping == null) {
+            throw new IllegalArgumentException("Short URL not found: " + shortUrl);
+        }
         String newOriginalUrl = urlContent.get("url");
-        if(newOriginalUrl == null || newOriginalUrl.isBlank()){
-          throw new IllegalArgumentException("Url Cannot Be empty");
+        if (newOriginalUrl == null || newOriginalUrl.isBlank()) {
+            throw new IllegalArgumentException("Url Cannot Be empty");
         }
         urlMapping.setOriginalUrl(newOriginalUrl);
         return mapper.map(urlMappingRepo.save(urlMapping), UrlMappingDTO.class);
     }
 
+    @Transactional
+    public UrlMappingDTO createCustomShortUrl(
+            Map<String, String> urlContent,
+            Principal principal) {
+        User user = userrepo.findByEmail(principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        String originalUrlRaw = urlContent.get("url");
+        String customRaw = urlContent.get("customShortUrl");
+
+        if (originalUrlRaw == null || originalUrlRaw.isBlank()) {
+            throw new IllegalArgumentException("Original URL cannot be empty");
+        }
+
+        if (customRaw == null || customRaw.isBlank()) {
+            throw new IllegalArgumentException("Custom URL cannot be empty");
+        }
+
+        String originalUrl = normalizeOriginalUrl(originalUrlRaw);
+        String customSlug = validateCustomSlug(customRaw);
+
+        if (urlMappingRepo.findByShortUrl(customSlug) != null) {
+            throw new IllegalArgumentException("Custom URL already exists");
+        }
+
+        UrlMapping entity = new UrlMapping();
+        entity.setOriginalUrl(originalUrl);
+        entity.setShortUrl(customSlug);
+        entity.setUser(user);
+        entity.setClickCount(0);
+        entity.setCreatedAt(LocalDateTime.now());
+
+        return mapper.map(urlMappingRepo.save(entity), UrlMappingDTO.class);
+    }
 
 }

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -74,14 +75,22 @@ public class UrlMappingController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> deleteUrlMapping(@PathVariable String shortUrl , Principal principal){
         service.deleteUrlMapping(shortUrl , principal);
-        return ResponseEntity.ok("URL Mapping Deleted Successfully");
+        return ResponseEntity.ok("Url Mapping Deleted Successfully");
     }
 
     @PutMapping("/update/{shortUrl}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<UrlMappingDTO> updateUrlMapping(@PathVariable String shortUrl, @RequestBody Map<String,String> urlContent, Principal principal){
-        service.updateUrlMapping(shortUrl, urlContent, principal);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<UrlMappingDTO> updateOrignalUrl(@PathVariable String shortUrl, @RequestBody Map<String,String> urlContent, Principal principal){
+        UrlMappingDTO updatedDto = service.updateOrignalUrl(shortUrl, urlContent, principal);
+        return ResponseEntity.ok(updatedDto);
+    }
+
+    @PostMapping("customShorten")
+    @PreAuthorize("hasRole('USER')")
+    //Map<url,customShortUrl>
+    public ResponseEntity<UrlMappingDTO> shortenCustomUrl(@RequestBody Map<String,String> UrlContent , Principal principal){
+        UrlMappingDTO dto = service.createCustomShortUrl(UrlContent , principal);
+        return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
 
