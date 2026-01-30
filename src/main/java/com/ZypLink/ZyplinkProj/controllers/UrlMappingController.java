@@ -8,9 +8,11 @@ import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -64,6 +66,22 @@ public class UrlMappingController {
     {
         Map<LocalDate, Long> clicksByDate = service.getTotalClicksByDate(principal, startDate, endDate);
         return ResponseEntity.ok(clicksByDate);
+    }
+
+    // Developing Crud fro urls 
+
+    @DeleteMapping("/delete/{shortUrl}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> deleteUrlMapping(@PathVariable String shortUrl , Principal principal){
+        service.deleteUrlMapping(shortUrl , principal);
+        return ResponseEntity.ok("URL Mapping Deleted Successfully");
+    }
+
+    @PutMapping("/update/{shortUrl}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<UrlMappingDTO> updateUrlMapping(@PathVariable String shortUrl, @RequestBody Map<String,String> urlContent, Principal principal){
+        service.updateUrlMapping(shortUrl, urlContent, principal);
+        return ResponseEntity.ok().build();
     }
 
 

@@ -143,5 +143,33 @@ public class UrlMappingService {
       }else throw new IllegalArgumentException("Short URL not found: " + shortUrl);
     }
 
+    public String deleteUrlMapping(String shortUrl, Principal principal) {
+       String email = principal.getName();
+       User user = userrepo.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+       UrlMapping urlMapping = urlMappingRepo.findByShortUrl(shortUrl);
+         if(urlMapping == null){
+          throw new IllegalArgumentException("Short URL not found: " + shortUrl);
+         }
+            if(!urlMapping.getUser().getId().equals(user.getId())){
+            throw new SecurityException("You are not authorized to delete this URL mapping");
+            }
+        urlMappingRepo.delete(urlMapping);
+        return "URL Mapping Deleted Successfully";
+    }
+
+    
+    public UrlMappingDTO updateUrlMapping(String shortUrl, Map<String,String> urlContent, Principal principal) {
+       UrlMapping urlMapping = urlMappingRepo.findByShortUrl(shortUrl);
+         if(urlMapping == null){
+          throw new IllegalArgumentException("Short URL not found: " + shortUrl);
+         }
+        String newOriginalUrl = urlContent.get("url");
+        if(newOriginalUrl == null || newOriginalUrl.isBlank()){
+          throw new IllegalArgumentException("Url Cannot Be empty");
+        }
+        urlMapping.setOriginalUrl(newOriginalUrl);
+        return mapper.map(urlMappingRepo.save(urlMapping), UrlMappingDTO.class);
+    }
+
 
 }
