@@ -1,4 +1,4 @@
-package com.ZypLink.ZyplinkProj.exceptions;
+package com.ZypLink.ZyplinkProj.advices;
 
 import java.util.Map;
 
@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.ZypLink.ZyplinkProj.exceptions.ResourceNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -42,6 +44,17 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                         "error", "INTERNAL_SERVER_ERROR",
+                        "message", "Something went wrong"
+                ));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, String>> HandleResourceNotFoundException(Exception ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "error", "Resource Not Found",
                         "message", "Something went wrong"
                 ));
     }

@@ -19,18 +19,22 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name="click_events")
+@Table(name = "click_events")
 public class ClickEvents {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private LocalDateTime clickDate;
 
+    private String ipAddress;
+    private String country;
+    private String region;
+    private String city;
+    private String isp;
+
     @ManyToOne
-    @JoinColumn(name="url_mapping_id")
+    @JoinColumn(name = "url_mapping_id")
     private UrlMapping urlMapping;
-
-
 
 }

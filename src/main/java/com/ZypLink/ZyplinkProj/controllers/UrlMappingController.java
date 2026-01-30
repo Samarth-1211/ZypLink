@@ -60,6 +60,8 @@ public class UrlMappingController {
 
     @GetMapping("totalClicks")
     //http://localhost:8080/api/urls/totalClicks?startDate=2024-01-01&endDate=2024-12-31
+
+    // Remember --> Allow user to delete analytics
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Map<LocalDate, Long>> getTotalClicksByDate(Principal principal , 
     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDate startDate,

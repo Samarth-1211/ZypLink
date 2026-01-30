@@ -15,16 +15,21 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.ZypLink.ZyplinkProj.dto.ClickEventsDTO;
+import com.ZypLink.ZyplinkProj.dto.IpApiResponse;
 import com.ZypLink.ZyplinkProj.dto.UrlMappingDTO;
 import com.ZypLink.ZyplinkProj.entities.ClickEvents;
 import com.ZypLink.ZyplinkProj.entities.UrlMapping;
 import com.ZypLink.ZyplinkProj.entities.User;
+import com.ZypLink.ZyplinkProj.exceptions.ResourceNotFoundException;
 import com.ZypLink.ZyplinkProj.repositories.ClickEventsRepository;
 import com.ZypLink.ZyplinkProj.repositories.UrlMappingRepository;
 import com.ZypLink.ZyplinkProj.repositories.UserRepository;
+import com.ZypLink.ZyplinkProj.utils.ExtractClientIp;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,6 +47,9 @@ public class UrlMappingService {
     private static final Pattern CUSTOM_SLUG_PATTERN = Pattern.compile("^[a-zA-Z0-9-_]{3,40}$");
     private static final Set<String> RESERVED_PATHS = Set.of(
             "api", "admin", "login", "logout", "swagger", "v3", "health");
+
+    private final ExtractClientIp clientIp;
+    private final IpAPIService ipAPIService;
 
     // Helper methods -----------------------------------
     public UrlMappingDTO shortTheUrl(Map<String, String> urlContent, Principal principal) {
@@ -170,21 +178,37 @@ public class UrlMappingService {
 
     }
 
-    public String RedirectToOriginalUrl(String shortUrl) {
-        UrlMapping urlmapping = urlMappingRepo.findByShortUrl(shortUrl);
-        if (urlmapping != null) {
-            urlmapping.setClickCount(urlmapping.getClickCount() + 1);
-            urlMappingRepo.save(urlmapping);
-            log.info("Recording click event for URL: {}", shortUrl);
-            // Record Click Event
-            ClickEvents clickEvents = new ClickEvents();
-            clickEvents.setClickDate(LocalDateTime.now());
-            clickEvents.setUrlMapping(urlmapping);
-            clickEventsRepo.save(clickEvents);
+    @Transactional
+    public String redirectToOriginalUrl(
+            String shortUrl,
+            HttpServletRequest request) {
 
-            return urlmapping.getOriginalUrl();
-        } else
-            throw new IllegalArgumentException("Short URL not found: " + shortUrl);
+        UrlMapping mapping = urlMappingRepo.findByShortUrl(shortUrl);
+
+        if (mapping == null) {
+            throw new ResourceNotFoundException("Short URL not found");
+        }
+
+        String clientIpaddr = clientIp.extractClientIp(request);
+
+        IpApiResponse location = ipAPIService.getLocationByIp(clientIpaddr);
+
+        ClickEvents clickEvent = new ClickEvents();
+        clickEvent.setClickDate(LocalDateTime.now());
+        clickEvent.setUrlMapping(mapping);
+        clickEvent.setIpAddress(clientIpaddr);
+
+        if (location != null) {
+            clickEvent.setCountry(location.getCountry());
+            clickEvent.setRegion(location.getRegionName());
+            clickEvent.setCity(location.getCity());
+            clickEvent.setIsp(location.getIsp());
+        }
+
+        clickEventsRepo.save(clickEvent);
+        mapping.setClickCount(mapping.getClickCount() + 1);
+        urlMappingRepo.save(mapping);
+        return mapping.getOriginalUrl();
     }
 
     public String deleteUrlMapping(String shortUrl, Principal principal) {
