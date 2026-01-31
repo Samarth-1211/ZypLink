@@ -27,7 +27,6 @@ public class ClickEvents {
     private Long id;
     private LocalDateTime clickDate;
 
-    private String ipAddress;
     private String country;
     private String region;
     private String city;

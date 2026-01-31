@@ -196,7 +196,7 @@ public class UrlMappingService {
         ClickEvents clickEvent = new ClickEvents();
         clickEvent.setClickDate(LocalDateTime.now());
         clickEvent.setUrlMapping(mapping);
-        clickEvent.setIpAddress(clientIpaddr);
+       
 
         if (location != null) {
             clickEvent.setCountry(location.getCountry());
@@ -234,7 +234,7 @@ public class UrlMappingService {
         if (urlMapping == null) {
             throw new IllegalArgumentException("Short URL not found: " + shortUrl);
         }
-        String newOriginalUrl = urlContent.get("url");
+        String newOriginalUrl = urlContent.get("newUrl");
         if (newOriginalUrl == null || newOriginalUrl.isBlank()) {
             throw new IllegalArgumentException("Url Cannot Be empty");
         }
@@ -249,8 +249,8 @@ public class UrlMappingService {
         User user = userrepo.findByEmail(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        String originalUrlRaw = urlContent.get("url");
-        String customRaw = urlContent.get("customShortUrl");
+        String originalUrlRaw = urlContent.get("originalUrl");
+        String customRaw = urlContent.get("customAlias");
 
         if (originalUrlRaw == null || originalUrlRaw.isBlank()) {
             throw new IllegalArgumentException("Original URL cannot be empty");
