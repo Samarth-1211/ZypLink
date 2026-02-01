@@ -1,5 +1,6 @@
 package com.ZypLink.ZyplinkProj.services;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,12 +27,15 @@ public class authService {
     private final SecurityConfig securityConfig;
     private final AuthenticationManager authmanager;
     private final JwtUtils jwtservice;
+    private final RecaptchaService recaptchaService;
 
     
 
     //register USer
 
     public void registerUSer(UserDTO user) {
+
+        
 
         if(userRepository.findByEmail(user.getEmail()).isPresent()){
             throw new RuntimeException("User already exists with email: " + user.getEmail());

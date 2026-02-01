@@ -2,6 +2,7 @@ package com.ZypLink.ZyplinkProj.config;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,48 +26,68 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WebSecurityConfig {
 
-        private final JwtAuthFilter JwtAuthFilter;
+    private final JwtAuthFilter jwtAuthFilter;
+    
 
-        @Bean
-        public SecurityFilterChain filterchain(HttpSecurity http) {
-                http
-                                .cors(Customizer.withDefaults())
-                                .csrf(csrfConfig -> csrfConfig.disable())
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers(
-                                                                "/internal/docs/**",
-                                                                "/internal/api-docs/**",
-                                                                "/swagger-ui/**",
-                                                                "/v3/api-docs/**")
-                                                .permitAll()
-                                                .requestMatchers("/api/auth/**").permitAll()
-                                                .requestMatchers("/api/urls/**").authenticated()
-                                                .requestMatchers("/{shortUrl}").permitAll())
-                                .sessionManagement(
-                                                sessionConfig -> sessionConfig
-                                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .addFilterBefore(JwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-                return http.build();
-        }
 
-        @Bean
-        AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-                return config.getAuthenticationManager();
-        }
+    @Value("${app.frontend.url}")
+    private String froneEndUrl;
 
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration config = new CorsConfiguration();
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(Customizer.withDefaults()) // ✅ REQUIRED
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/api/auth/**",
+                    "/internal/docs/**",
+                    "/internal/api-docs/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/{shortUrl}"
+                ).permitAll()
+                .requestMatchers("/api/urls/**").authenticated()
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-                config.setAllowedOrigins(List.of("http://localhost:5173")); // your frontend
-                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                config.setAllowedHeaders(List.of("*"));
-                config.setAllowCredentials(true);
+        return http.build();
+    }
 
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", config);
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 
-                return source;
-        }
+    // ✅ SINGLE SOURCE OF TRUTH FOR CORS
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
 
+        config.setAllowedOrigins(List.of(froneEndUrl));
+        
+        config.setAllowedMethods(List.of(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS"
+        ));
+
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source =
+            new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 }
+
+
+
+
+

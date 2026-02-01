@@ -72,4 +72,11 @@ public class GlobalExceptionHandler {
                                                 "error", "Resource Not Found",
                                                 "message", "Something went wrong"));
         }
+
+        @ExceptionHandler(RuntimeException.class)
+        public ResponseEntity<String> handleRuntime(RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+
+
 }

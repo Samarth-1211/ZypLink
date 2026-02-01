@@ -21,4 +21,10 @@ public class ClickEventsDTO {
     private LocalDateTime clickDate;
     private Integer clickCounts;
 
+    private String country;
+    private String region;
+    private String city;
+    private String isp;
+
+
 }

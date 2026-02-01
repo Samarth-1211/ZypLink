@@ -150,6 +150,10 @@ public UrlMappingDTO shortTheUrl(Map<String, String> urlContent, Principal princ
             dto.setId(event.getId());
             dto.setClickDate(event.getClickDate());
             dto.setClickCounts(event.getUrlMapping().getClickCount());
+            dto.setCity(event.getCity());
+            dto.setCountry(event.getCountry());
+            dto.setRegion(event.getRegion());
+            dto.setIsp(event.getIsp());
             clickEventsDTOs.add(dto);
         }
         return clickEventsDTOs;
