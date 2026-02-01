@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -77,6 +78,12 @@ public class GlobalExceptionHandler {
         public ResponseEntity<String> handleRuntime(RuntimeException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
+
+        @ExceptionHandler(DisabledException.class)
+        public ResponseEntity<String> DisabledException(DisabledException ex) {
+                return ResponseEntity.badRequest().body(ex.getMessage());
+            }
+    
 
 
 }

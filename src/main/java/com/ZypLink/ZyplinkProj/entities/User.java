@@ -1,5 +1,6 @@
 package com.ZypLink.ZyplinkProj.entities;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
@@ -34,6 +35,13 @@ public class User implements UserDetails {
     private String password;
     private String name;
     private String role;
+
+        // ===== OTP VERIFICATION =====
+    private String otp;
+
+    private LocalDateTime otpExpiry;
+
+    private boolean enabled;
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -69,7 +77,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.enabled;
     }
 
 }
