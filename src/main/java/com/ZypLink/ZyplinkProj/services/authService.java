@@ -47,7 +47,7 @@ public class authService {
         }
 
         String otp = otpUtil.generateOtp();
-        
+        //Enabled OTP verification
         User newUser = User.builder()
                 .email(user.getEmail())
                 .name(user.getName())
