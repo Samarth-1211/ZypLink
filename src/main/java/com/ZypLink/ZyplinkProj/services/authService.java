@@ -65,6 +65,8 @@ public class authService {
 
     // Login User 
 
+    // Exception handling linking to frontend----
+
     public AuthResponseDTO loginUser(LoginRequestDTO users){
         Authentication authenticated = authmanager.authenticate(
             new UsernamePasswordAuthenticationToken(

@@ -36,7 +36,7 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) // ✅ REQUIRED
+            .cors(Customizer.withDefaults()) // REQUIRED
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
@@ -64,7 +64,7 @@ public class WebSecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // ✅ SINGLE SOURCE OF TRUTH FOR CORS
+    // SINGLE SOURCE OF TRUTH FOR CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
