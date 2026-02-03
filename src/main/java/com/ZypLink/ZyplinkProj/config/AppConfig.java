@@ -19,8 +19,4 @@ public class AppConfig {
     //     return new RestTemplateBuilder();
     // }
 
-
-    // efaer
-    
-    //efvsarbgfvbgtfrwat
 }
