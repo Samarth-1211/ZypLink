@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ZypLink.ZyplinkProj.dto.ClickEventsDTO;
+import com.ZypLink.ZyplinkProj.dto.ShortenUrlRequestDTO;
 import com.ZypLink.ZyplinkProj.dto.UrlMappingDTO;
 import com.ZypLink.ZyplinkProj.services.UrlMappingService;
 
@@ -37,7 +38,7 @@ public class UrlMappingController {
 
     @PostMapping("/shorten")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<UrlMappingDTO> shortenUrl(@RequestBody Map<String,String> UrlContent , Principal principal){
+    public ResponseEntity<UrlMappingDTO> shortenUrl(@RequestBody ShortenUrlRequestDTO UrlContent , Principal principal){
         return ResponseEntity.ok(service.shortTheUrl(UrlContent , principal));
        // More Advance Way can be Ask User for custom length of short Url
     }
@@ -90,7 +91,7 @@ public class UrlMappingController {
     @PostMapping("customShorten")
     @PreAuthorize("hasRole('USER')")
     //Map<url,customShortUrl>
-    public ResponseEntity<UrlMappingDTO> shortenCustomUrl(@RequestBody Map<String,String> UrlContent , Principal principal){
+    public ResponseEntity<UrlMappingDTO> shortenCustomUrl(@RequestBody ShortenUrlRequestDTO UrlContent , Principal principal){
         UrlMappingDTO dto = service.createCustomShortUrl(UrlContent , principal);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }

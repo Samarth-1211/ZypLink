@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ZypLink.ZyplinkProj.dto.ClickEventsDTO;
 import com.ZypLink.ZyplinkProj.dto.IpApiResponse;
+import com.ZypLink.ZyplinkProj.dto.ShortenUrlRequestDTO;
 import com.ZypLink.ZyplinkProj.dto.UrlMappingDTO;
 import com.ZypLink.ZyplinkProj.entities.ClickEvents;
 import com.ZypLink.ZyplinkProj.entities.UrlMapping;
@@ -81,13 +82,16 @@ public class UrlMappingService {
 
 //-----To Short The orignal URL  Provided By the use--------------------
    
-public UrlMappingDTO shortTheUrl(Map<String, String> urlContent, Principal principal) {
+public UrlMappingDTO shortTheUrl(ShortenUrlRequestDTO urlContent, Principal principal) {
         User user = userrepo.findByEmail(principal.getName()).orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
         
         // 2️ Extract & basic validate URL
-        String originalUrl = urlContent.get("url");
+        String originalUrl = urlContent.getOriginalUrl();
+
         String InitalCheckedUrl = securityvalidator.validate(originalUrl);
         String finalUrl = resolveFinalUrl(InitalCheckedUrl);
+       
+       
         if (!safeBrowsingService.isUrlSafe(finalUrl)) {
             throw new IllegalArgumentException("The provided URL is flagged as unsafe and cannot be shortened as per Google ");
         }
@@ -238,14 +242,14 @@ public UrlMappingDTO shortTheUrl(Map<String, String> urlContent, Principal princ
 
     @Transactional
     public UrlMappingDTO createCustomShortUrl(
-            Map<String, String> urlContent,
+           ShortenUrlRequestDTO urlContent,
             Principal principal) {
 
         User user = userrepo.findByEmail(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        String originalUrlRaw = urlContent.get("originalUrl");
-        String customRawUrl = urlContent.get("customAlias");
+        String originalUrlRaw = urlContent.getOriginalUrl();
+        String customRawUrl = urlContent.getCustomAlias();
 
         if (originalUrlRaw == null || originalUrlRaw.isBlank()) {
             throw new IllegalArgumentException("Original URL cannot be empty");
