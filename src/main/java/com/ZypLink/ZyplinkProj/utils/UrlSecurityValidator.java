@@ -61,7 +61,7 @@ public final class UrlSecurityValidator {
 
     private static void validateHost(URI uri) {
         if (uri.getHost() == null) {
-            throw new UrlValidationException("URL must contain a valid host");
+            throw new UrlValidationException("Invalid Url Syntax or host");
         }
     }
 
