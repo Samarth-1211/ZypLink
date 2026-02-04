@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.ZypLink.ZyplinkProj.entities.ClickEvents;
-import com.ZypLink.ZyplinkProj.entities.User;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

@@ -3,7 +3,6 @@ package com.ZypLink.ZyplinkProj.utils;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.SecureRandom;
 import java.util.Set;
 import java.util.regex.Pattern;
 
