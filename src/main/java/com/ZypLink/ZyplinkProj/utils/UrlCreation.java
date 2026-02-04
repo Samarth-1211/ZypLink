@@ -34,39 +34,35 @@ public class UrlCreation {
 
     public static String validateCustomSlug(String rawSlug) {
 
-        // 1️ Null / empty check
+        //  Null / empty check
         if (rawSlug == null || rawSlug.isBlank()) {
             throw new UrlValidationException("Custom URL cannot be empty");
         }
-
-        // 2️ Normalize
+    
+        //  Normalize
         String slug = rawSlug.trim().toLowerCase();
-
-        // 3️ Block obvious injection / URL tricks
-        if (slug.contains("/") || slug.contains("\\")
-                || slug.contains(".")
-                || slug.contains("?")
-                || slug.contains("#")
-                || slug.contains("%")
-                || slug.contains("http")) {
-
+    
+        // Block path traversal & routing attacks
+        if (slug.contains("/") || slug.contains("\\")) {
             throw new UrlValidationException(
-                    "Custom URL contains invalid characters");
+                    "Custom URL cannot contain slashes");
         }
-
-        // 4️ Block reserved system routes
+    
+        //Block reserved system routes
         if (RESERVED_PATHS.contains(slug)) {
             throw new UrlValidationException(
                     "This custom URL is reserved and cannot be used");
         }
-
-        // 5️ Regex enforcement (length + allowed chars)
+    
+        // Regex enforcement (relaxed but safe)
         if (!CUSTOM_SLUG_PATTERN.matcher(slug).matches()) {
             throw new UrlValidationException(
-                    "Custom URL must be 3–40 characters and contain only letters, numbers, '-' or '_'");
+                "Custom URL must be 2–50 characters and may contain letters, numbers, '.', '-' or '_'"
+            );
         }
-
+    
         return slug;
     }
+    
 
 }
