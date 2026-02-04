@@ -11,6 +11,8 @@ import com.ZypLink.ZyplinkProj.exceptions.ApiErrorResponse;
 import com.ZypLink.ZyplinkProj.exceptions.MethodArgumentNotValidException;
 import com.ZypLink.ZyplinkProj.exceptions.ResourceNotFoundException;
 import com.ZypLink.ZyplinkProj.exceptions.UrlValidationException;
+import com.ZypLink.ZyplinkProj.exceptions.ExpiredJwtException;
+
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -97,6 +99,19 @@ public class GlobalExceptionHandler {
                 .body(new ApiErrorResponse(
                         400,
                         "RUNTIME_ERROR",
+                        ex.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ApiErrorResponse> ExpiredJwtException(
+            RuntimeException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ApiErrorResponse(
+                        400,
+                        "JWT TOKEN EXPIRED - Login Again",
                         ex.getMessage()
                 ));
     }

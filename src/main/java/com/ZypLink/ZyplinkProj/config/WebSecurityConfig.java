@@ -45,7 +45,8 @@ public class WebSecurityConfig {
                     "/internal/api-docs/**",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    "/{shortUrl}"
+                    "/{shortUrl}",
+                    "/api/contact/**"
                 ).permitAll()
                 .requestMatchers("/api/urls/**").authenticated()
                 .anyRequest().authenticated()
