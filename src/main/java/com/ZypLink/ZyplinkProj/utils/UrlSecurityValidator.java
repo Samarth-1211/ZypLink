@@ -32,15 +32,22 @@ public final class UrlSecurityValidator {
         if (rawUrl == null || rawUrl.isBlank()) {
             throw new UrlValidationException("URL cannot be empty");
         }
-
+    
+        rawUrl = rawUrl.trim();
+    
+        //  NORMALIZE MISSING SCHEME (UX FIX)
+        if (!rawUrl.matches("^(?i)https?://.*")) {
+            rawUrl = "https://" + rawUrl;
+        }
+    
         URI uri = parse(rawUrl);
         validateScheme(uri);
         validateHost(uri);
         blockPrivateAndLocalTargets(uri);
-
+    
         return normalize(uri);
     }
-
+    
     // ---------- INTERNAL METHODS ----------
 
     private static URI parse(String rawUrl) {

@@ -19,4 +19,7 @@ public interface ClickEventsRepository extends JpaRepository<ClickEvents,Long>{
 
     void deleteByUrlMapping(UrlMapping urlMapping);
 
+
+
+
 }

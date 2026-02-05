@@ -55,6 +55,7 @@ public class authService {
                 .password(securityConfig.passwordEncoder().encode(user.getPassword()))
                 .role(user.getRole())
                 .otp(otp)
+                .createdAt(LocalDateTime.now())
                 .otpExpiry(LocalDateTime.now().plusMinutes(10))
                 .enabled(false)
                 .build();

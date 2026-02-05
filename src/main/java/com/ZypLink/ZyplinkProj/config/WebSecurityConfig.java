@@ -49,6 +49,7 @@ public class WebSecurityConfig {
                     "/api/contact/**"
                 ).permitAll()
                 .requestMatchers("/api/urls/**").authenticated()
+                .requestMatchers("/user/**").hasRole("USER")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session ->

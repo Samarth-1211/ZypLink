@@ -6,11 +6,15 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,17 +39,22 @@ public class User implements UserDetails {
     private String password;
     private String name;
     private String role;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<UrlMapping> urlMappings;
 
-        // ===== OTP VERIFICATION =====
+    // ===== OTP VERIFICATION =====
     private String otp;
 
     private LocalDateTime otpExpiry;
 
     private boolean enabled;
-    
+
+    private LocalDateTime createdAt;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-       return List.of(() -> "ROLE_" + this.role);
+        return List.of(() -> "ROLE_" + this.role);
     }
 
     @Override
@@ -59,7 +68,8 @@ public class User implements UserDetails {
 
     }
 
-    // Other methods from UserDetails can return default values or be customized as needed
+    // Other methods from UserDetails can return default values or be customized as
+    // needed
     @Override
     public boolean isAccountNonExpired() {
         return true;
