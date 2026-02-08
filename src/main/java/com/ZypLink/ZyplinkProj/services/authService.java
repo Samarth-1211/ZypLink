@@ -35,7 +35,6 @@ public class authService {
     private final SecurityConfig securityConfig;
     private final AuthenticationManager authmanager;
     private final JwtUtils jwtservice;
-    private final RecaptchaService recaptchaService;
     private final OtpUtil otpUtil;
     private final EmailService emailService;
 

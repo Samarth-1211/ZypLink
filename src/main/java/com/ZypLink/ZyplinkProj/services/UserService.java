@@ -1,9 +1,6 @@
 package com.ZypLink.ZyplinkProj.services;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
-
-import org.hibernate.mapping.List;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,11 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ZypLink.ZyplinkProj.dto.UserProfileUpdates;
-import com.ZypLink.ZyplinkProj.entities.UrlMapping;
 import com.ZypLink.ZyplinkProj.entities.User;
 import com.ZypLink.ZyplinkProj.exceptions.ResourceNotFoundException;
-import com.ZypLink.ZyplinkProj.repositories.ClickEventsRepository;
-import com.ZypLink.ZyplinkProj.repositories.UrlMappingRepository;
 import com.ZypLink.ZyplinkProj.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -27,8 +21,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository repo;
     private final ModelMapper mapper;
-    private final ClickEventsRepository clickrepo;
-    private final UrlMappingRepository urlRepo;
+   
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
