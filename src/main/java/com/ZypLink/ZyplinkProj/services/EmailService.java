@@ -1,247 +1,262 @@
 package com.ZypLink.ZyplinkProj.services;
 
-import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+        private final WebClient webClient;
+        private final String senderEmail;
+        private final String senderName;
 
-    @Async
-    public void sendOtpEmail(String to, String otp) {
+        public EmailService(
+                        @Value("${brevo.api.key}") String apiKey,
+                        @Value("${brevo.sender.email}") String senderEmail,
+                        @Value("${brevo.sender.name}") String senderName) {
+                this.senderEmail = senderEmail;
+                this.senderName = senderName;
 
-        log.info("[EMAIL] OTP send requested for raw email: {}", to);
-
-        String safeEmail;
-        try {
-            safeEmail = normalizeEmail(to);
-            log.info(" [EMAIL] Normalized email: {}", safeEmail);
-        } catch (Exception e) {
-            log.error(" [EMAIL] Email normalization failed: {}", to, e);
-            throw e;
+                this.webClient = WebClient.builder()
+                                .baseUrl("https://api.brevo.com/v3")
+                                .defaultHeader("api-key", apiKey)
+                                .defaultHeader("Content-Type", "application/json")
+                                .build();
         }
 
-        String html = """
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                  <meta charset="UTF-8" />
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-                  <title>ZypLink Email Verification</title>
-                </head>
-                
-                <body style="
-                  margin:0;
-                  padding:0;
-                  background-color:#020617;
-                  font-family:Arial,Helvetica,sans-serif;
-                ">
-                
-                  <!-- OUTER WRAPPER -->
-                  <table width="100%" cellpadding="0" cellspacing="0" style="
-                    background-color:#020617;
-                    padding:40px 0;
-                  ">
-                    <tr>
-                      <td align="center">
-                
-                        <!-- MAIN CARD -->
-                        <table width="520" cellpadding="0" cellspacing="0" style="
-                          background-color:#0f172a;
-                          border-radius:16px;
-                          padding:40px;
-                          border:1px solid #1e293b;
-                          box-shadow:0 20px 50px rgba(0,0,0,0.6);
-                        ">
-                
-                          <!-- BRAND -->
-                          <tr>
-                            <td align="center" style="padding-bottom:24px;">
-                              <h1 style="
-                                margin:0;
-                                font-size:32px;
-                                font-weight:700;
-                                color:#38bdf8;
-                                letter-spacing:1px;
-                              ">
-                                ZypLink
-                              </h1>
-                              <p style="
-                                margin-top:8px;
-                                font-size:14px;
-                                color:#94a3b8;
-                              ">
-                                Smart & Secure URL Management
-                              </p>
-                            </td>
-                          </tr>
-                
-                          <!-- MESSAGE -->
-                          <tr>
-                            <td style="
-                              font-size:15px;
-                              color:#e5e7eb;
-                              line-height:1.7;
-                              padding-bottom:24px;
-                            ">
-                              <p style="margin:0 0 12px;">Hello 👋</p>
-                              <p style="margin:0;">
-                                Thank you for choosing <strong>ZypLink</strong>.
-                                Please use the One-Time Password (OTP) below to verify your email address.
-                              </p>
-                            </td>
-                          </tr>
-                
-                          <!-- OTP BOX -->
-                          <tr>
-                            <td align="center" style="padding:28px 0;">
-                              <table cellpadding="0" cellspacing="0" style="
-                                background-color:#020617;
-                                border:2px dashed #38bdf8;
-                                border-radius:12px;
-                              ">
-                                <tr>
-                                  <td style="
-                                    padding:18px 34px;
-                                    font-size:30px;
-                                    font-weight:700;
-                                    letter-spacing:8px;
-                                    color:#38bdf8;
-                                    user-select:all;
-                                    text-align:center;
+        @Async
+        public void sendOtpEmail(String to, String otp) {
+
+                log.info("[EMAIL] OTP send requested for raw email: {}", to);
+
+                String safeEmail;
+                try {
+                        safeEmail = normalizeEmail(to);
+                        log.info("[EMAIL] Normalized email: {}", safeEmail);
+                } catch (Exception e) {
+                        log.error("[EMAIL] Email normalization failed: {}", to, e);
+                        throw e;
+                }
+
+                String html = """
+                                <!DOCTYPE html>
+                                <html lang="en">
+                                <head>
+                                  <meta charset="UTF-8" />
+                                  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                                  <title>ZypLink Email Verification</title>
+                                </head>
+
+                                <body style="
+                                  margin:0;
+                                  padding:0;
+                                  background-color:#020617;
+                                  font-family:Arial,Helvetica,sans-serif;
+                                ">
+
+                                  <!-- OUTER WRAPPER -->
+                                  <table width="100%" cellpadding="0" cellspacing="0" style="
+                                    background-color:#020617;
+                                    padding:40px 0;
                                   ">
-                                    {{OTP}}
-                                  </td>
-                                </tr>
-                              </table>
-                            </td>
-                          </tr>
-                
-                          <!-- COPY HINT -->
-                          <tr>
-                            <td align="center" style="padding-bottom:28px;">
-                              <div style="
-                                display:inline-block;
-                                background-color:#38bdf8;
-                                color:#020617;
-                                padding:12px 28px;
-                                border-radius:10px;
-                                font-size:14px;
-                                font-weight:600;
-                              ">
-                                Tap & Hold OTP to Copy
-                              </div>
-                            </td>
-                          </tr>
-                
-                          <!-- INFO -->
-                          <tr>
-                            <td style="
-                              font-size:14px;
-                              color:#94a3b8;
-                              line-height:1.6;
-                              padding-bottom:30px;
-                            ">
-                              <p style="margin:0 0 8px;">
-                                ⏳ This OTP is valid for <strong>10 minutes</strong>.
-                              </p>
-                              <p style="margin:0;">
-                                If you didn’t request this verification, please ignore this email.
-                              </p>
-                            </td>
-                          </tr>
-                
-                          <!-- FOOTER -->
-                          <tr>
-                            <td style="
-                              border-top:1px solid #1e293b;
-                              padding-top:18px;
-                              text-align:center;
-                              font-size:12px;
-                              color:#64748b;
-                            ">
-                              © 2026 ZypLink. All rights reserved.
-                            </td>
-                          </tr>
-                
-                          <tr>
-                            <td style="
-                              padding-top:8px;
-                              text-align:center;
-                              font-size:12px;
-                              color:#475569;
-                            ">
-                              Built with ❤️ by <strong>Samarth Sharma</strong>
-                            </td>
-                          </tr>
-                
-                        </table>
-                        <!-- END CARD -->
-                
-                      </td>
-                    </tr>
-                  </table>
-                
-                </body>
-                </html>
-                
-""".replace("{{OTP}}", otp);
+                                    <tr>
+                                      <td align="center">
 
+                                        <!-- MAIN CARD -->
+                                        <table width="520" cellpadding="0" cellspacing="0" style="
+                                          background-color:#0f172a;
+                                          border-radius:16px;
+                                          padding:40px;
+                                          border:1px solid #1e293b;
+                                          box-shadow:0 20px 50px rgba(0,0,0,0.6);
+                                        ">
 
-        try {
-            log.info("[EMAIL] Creating MIME message");
+                                          <!-- BRAND -->
+                                          <tr>
+                                            <td align="center" style="padding-bottom:24px;">
+                                              <h1 style="
+                                                margin:0;
+                                                font-size:32px;
+                                                font-weight:700;
+                                                color:#38bdf8;
+                                                letter-spacing:1px;
+                                              ">
+                                                ZypLink
+                                              </h1>
+                                              <p style="
+                                                margin-top:8px;
+                                                font-size:14px;
+                                                color:#94a3b8;
+                                              ">
+                                                Smart & Secure URL Management
+                                              </p>
+                                            </td>
+                                          </tr>
 
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper =
-                    new MimeMessageHelper(mimeMessage, true, "UTF-8");
+                                          <!-- MESSAGE -->
+                                          <tr>
+                                            <td style="
+                                              font-size:15px;
+                                              color:#e5e7eb;
+                                              line-height:1.7;
+                                              padding-bottom:24px;
+                                            ">
+                                              <p style="margin:0 0 12px;">Hello 👋</p>
+                                              <p style="margin:0;">
+                                                Thank you for choosing <strong>ZypLink</strong>.
+                                                Please use the One-Time Password (OTP) below to verify your email address.
+                                              </p>
+                                            </td>
+                                          </tr>
 
-            helper.setTo(safeEmail);
-            helper.setFrom("zyplink1@gmail.com");
-            helper.setSubject("Your OTP Code");
-            helper.setText(html, true);
+                                          <!-- OTP BOX -->
+                                          <tr>
+                                            <td align="center" style="padding:28px 0;">
+                                              <table cellpadding="0" cellspacing="0" style="
+                                                background-color:#020617;
+                                                border:2px dashed #38bdf8;
+                                                border-radius:12px;
+                                              ">
+                                                <tr>
+                                                  <td style="
+                                                    padding:18px 34px;
+                                                    font-size:30px;
+                                                    font-weight:700;
+                                                    letter-spacing:8px;
+                                                    color:#38bdf8;
+                                                    user-select:all;
+                                                    text-align:center;
+                                                  ">
+                                                    {{OTP}}
+                                                  </td>
+                                                </tr>
+                                              </table>
+                                            </td>
+                                          </tr>
 
-            log.info("[EMAIL] Sending OTP email to {}", safeEmail);
-            mailSender.send(mimeMessage);
+                                          <!-- COPY HINT -->
+                                          <tr>
+                                            <td align="center" style="padding-bottom:28px;">
+                                              <div style="
+                                                display:inline-block;
+                                                background-color:#38bdf8;
+                                                color:#020617;
+                                                padding:12px 28px;
+                                                border-radius:10px;
+                                                font-size:14px;
+                                                font-weight:600;
+                                              ">
+                                                Tap & Hold OTP to Copy
+                                              </div>
+                                            </td>
+                                          </tr>
 
-            log.info(" [EMAIL] OTP email SENT successfully to {}", safeEmail);
+                                          <!-- INFO -->
+                                          <tr>
+                                            <td style="
+                                              font-size:14px;
+                                              color:#94a3b8;
+                                              line-height:1.6;
+                                              padding-bottom:30px;
+                                            ">
+                                              <p style="margin:0 0 8px;">
+                                                ⏳ This OTP is valid for <strong>10 minutes</strong>.
+                                              </p>
+                                              <p style="margin:0;">
+                                                If you didn’t request this verification, please ignore this email.
+                                              </p>
+                                            </td>
+                                          </tr>
 
-        } catch (Exception e) {
+                                          <!-- FOOTER -->
+                                          <tr>
+                                            <td style="
+                                              border-top:1px solid #1e293b;
+                                              padding-top:18px;
+                                              text-align:center;
+                                              font-size:12px;
+                                              color:#64748b;
+                                            ">
+                                              © 2026 ZypLink. All rights reserved.
+                                            </td>
+                                          </tr>
 
-            log.error(
-                " [EMAIL] FAILED to send OTP email to {} | Cause: {}",
-                safeEmail,
-                e.getMessage(),
-                e
-            );
+                                          <tr>
+                                            <td style="
+                                              padding-top:8px;
+                                              text-align:center;
+                                              font-size:12px;
+                                              color:#475569;
+                                            ">
+                                              Built with ❤️ by <strong>Samarth Sharma</strong>
+                                            </td>
+                                          </tr>
 
-            throw new RuntimeException("Failed to send OTP email", e);
+                                        </table>
+                                        <!-- END CARD -->
+
+                                      </td>
+                                    </tr>
+                                  </table>
+
+                                </body>
+                                </html>
+
+                                """
+                                .replace("{{OTP}}", otp);
+
+                try {
+                        log.info("[EMAIL] Sending OTP email to {} via Brevo API", safeEmail);
+
+                        Map<String, Object> body = Map.of(
+                                        "sender", Map.of(
+                                                        "email", senderEmail,
+                                                        "name", senderName),
+                                        "to", List.of(
+                                                        Map.of("email", safeEmail)),
+                                        "subject", "Your OTP Code",
+                                        "htmlContent", html);
+
+                        webClient.post()
+                                        .uri("/smtp/email")
+                                        .bodyValue(body)
+                                        .retrieve()
+                                        .toBodilessEntity()
+                                        .doOnSuccess(res -> log.info("[EMAIL] OTP email SENT successfully to {}",
+                                                        safeEmail))
+                                        .doOnError(err -> log.error("[EMAIL] FAILED to send OTP email to {}", safeEmail,
+                                                        err))
+                                        .block();
+
+                } catch (Exception e) {
+                        log.error("[EMAIL] FAILED to send OTP email to {}", safeEmail, e);
+                        throw new RuntimeException("Failed to send OTP email", e);
+                }
         }
-    }
 
-    private String normalizeEmail(String email) {
+        private String normalizeEmail(String email) {
 
-        if (email == null) {
-            throw new IllegalArgumentException("Email is null");
+                if (email == null) {
+                        throw new IllegalArgumentException("Email is null");
+                }
+
+                email = email.trim();
+
+                if (email.contains(",") || email.contains(" ")) {
+                        throw new IllegalArgumentException("Invalid email format");
+                }
+
+                if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+                        throw new IllegalArgumentException("Invalid email address");
+                }
+
+                return email;
         }
-
-        email = email.trim();
-
-        if (email.contains(",") || email.contains(" ")) {
-            throw new IllegalArgumentException("Invalid email format");
-        }
-
-        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
-            throw new IllegalArgumentException("Invalid email address");
-        }
-
-        return email;
-    }
 }

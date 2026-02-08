@@ -1,50 +1,84 @@
 package com.ZypLink.ZyplinkProj.services;
 
 import com.ZypLink.ZyplinkProj.dto.ContactRequest;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
 @Service
 public class ContactEmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final WebClient webClient;
+    private final String adminEmail;
+    private final String senderEmail;
+    private final String senderName;
 
-    // Admin / Receiver email (can be same as Brevo sender)
-    private static final String ADMIN_EMAIL = "zyplink1@gmail.com";
+    public ContactEmailService(
+            @Value("${brevo.api.key}") String apiKey,
+            @Value("${brevo.sender.email}") String senderEmail,
+            @Value("${brevo.sender.name}") String senderName
+    ) {
+        this.senderEmail = senderEmail;
+        this.senderName = senderName;
+        this.adminEmail = senderEmail; // admin receives emails
+
+        this.webClient = WebClient.builder()
+                .baseUrl("https://api.brevo.com/v3")
+                .defaultHeader("api-key", apiKey)
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
 
     @Async
     public void sendContactMessage(ContactRequest request) {
 
+        log.info("[CONTACT] New contact message from {}", request.getEmail());
+
+        String htmlBody = buildHtmlBody(request);
+
         try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            Map<String, Object> body = Map.of(
+                    "sender", Map.of(
+                            "email", senderEmail,
+                            "name", senderName
+                    ),
+                    "to", List.of(
+                            Map.of("email", adminEmail)
+                    ),
+                    "replyTo", Map.of(
+                            "email", request.getEmail(),
+                            "name", request.getName()
+                    ),
+                    "subject", "📩 New Contact Message — ZypLink",
+                    "htmlContent", htmlBody
+            );
 
-            MimeMessageHelper helper =
-                    new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            helper.setTo(ADMIN_EMAIL);
-            helper.setFrom(new InternetAddress(
-                    "zyplink1@gmail.com", "ZypLink Contact"));
-            helper.setReplyTo(request.getEmail()); // 👈 reply goes to user
-            helper.setSubject("📩 New Contact Message — ZypLink");
-
-            String htmlBody = buildHtmlBody(request);
-
-            helper.setText(htmlBody, true); // true = HTML
-
-            mailSender.send(mimeMessage);
+            webClient.post()
+                    .uri("/smtp/email")
+                    .bodyValue(body)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .doOnSuccess(res ->
+                            log.info("[CONTACT] Contact email sent successfully from {}", request.getEmail())
+                    )
+                    .doOnError(err ->
+                            log.error("[CONTACT] Failed to send contact email from {}", request.getEmail(), err)
+                    )
+                    .block();
 
         } catch (Exception e) {
+            log.error("[CONTACT] Exception while sending contact email", e);
             throw new RuntimeException("Failed to send contact email", e);
         }
     }
 
-    /* ================= HTML TEMPLATE ================= */
+    /* ================= HTML TEMPLATE (UNCHANGED) ================= */
     private String buildHtmlBody(ContactRequest request) {
 
         return """
