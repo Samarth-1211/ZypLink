@@ -1,148 +1,247 @@
 package com.ZypLink.ZyplinkProj.services;
 
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Autowired
+    private JavaMailSender mailSender;
 
+    @Async
     public void sendOtpEmail(String to, String otp) {
 
+        log.info("[EMAIL] OTP send requested for raw email: {}", to);
+
+        String safeEmail;
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper =
-                    new MimeMessageHelper(message, true, "UTF-8");
+            safeEmail = normalizeEmail(to);
+            log.info(" [EMAIL] Normalized email: {}", safeEmail);
+        } catch (Exception e) {
+            log.error(" [EMAIL] Email normalization failed: {}", to, e);
+            throw e;
+        }
 
-            helper.setTo(to);
-            helper.setSubject("ZypLink | Verify Your Email");
-
-            String html = """
+        String html = """
                 <!DOCTYPE html>
-                <html>
+                <html lang="en">
                 <head>
                   <meta charset="UTF-8" />
                   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                  <title>ZypLink Email Verification</title>
                 </head>
-                <body style="margin:0;padding:0;background-color:#f8fafc;font-family:Arial,sans-serif;">
-                  
-                  <table width="100%%" cellpadding="0" cellspacing="0" style="padding:30px 0;">
+                
+                <body style="
+                  margin:0;
+                  padding:0;
+                  background-color:#020617;
+                  font-family:Arial,Helvetica,sans-serif;
+                ">
+                
+                  <!-- OUTER WRAPPER -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="
+                    background-color:#020617;
+                    padding:40px 0;
+                  ">
                     <tr>
                       <td align="center">
-
-                        <table width="520" cellpadding="0" cellspacing="0"
-                          style="
-                            background:#ffffff;
-                            border-radius:12px;
-                            padding:32px;
-                            box-shadow:0 10px 30px rgba(0,0,0,0.08);
-                          ">
-
-                          <!-- HEADER -->
+                
+                        <!-- MAIN CARD -->
+                        <table width="520" cellpadding="0" cellspacing="0" style="
+                          background-color:#0f172a;
+                          border-radius:16px;
+                          padding:40px;
+                          border:1px solid #1e293b;
+                          box-shadow:0 20px 50px rgba(0,0,0,0.6);
+                        ">
+                
+                          <!-- BRAND -->
                           <tr>
-                            <td align="center" style="padding-bottom:20px;">
-                              <h1 style="margin:0;color:#2563eb;font-size:30px;">
+                            <td align="center" style="padding-bottom:24px;">
+                              <h1 style="
+                                margin:0;
+                                font-size:32px;
+                                font-weight:700;
+                                color:#38bdf8;
+                                letter-spacing:1px;
+                              ">
                                 ZypLink
                               </h1>
-                              <p style="margin:6px 0 0;color:#64748b;font-size:14px;">
+                              <p style="
+                                margin-top:8px;
+                                font-size:14px;
+                                color:#94a3b8;
+                              ">
                                 Smart & Secure URL Management
                               </p>
                             </td>
                           </tr>
-
-                          <!-- BODY -->
+                
+                          <!-- MESSAGE -->
                           <tr>
-                            <td style="color:#334155;font-size:15px;line-height:1.6;">
-                              <p>Hello,</p>
-
-                              <p>
-                                Thank you for registering with <strong>ZypLink</strong>.
-                                Please verify your email address using the OTP below.
+                            <td style="
+                              font-size:15px;
+                              color:#e5e7eb;
+                              line-height:1.7;
+                              padding-bottom:24px;
+                            ">
+                              <p style="margin:0 0 12px;">Hello 👋</p>
+                              <p style="margin:0;">
+                                Thank you for choosing <strong>ZypLink</strong>.
+                                Please use the One-Time Password (OTP) below to verify your email address.
                               </p>
                             </td>
                           </tr>
-
-                          <!-- OTP -->
+                
+                          <!-- OTP BOX -->
                           <tr>
-                            <td align="center" style="padding:24px 0;">
-                              <div style="
-                                background:#eff6ff;
-                                border:1px dashed #2563eb;
-                                color:#2563eb;
-                                font-size:26px;
-                                font-weight:700;
-                                letter-spacing:5px;
-                                padding:14px 26px;
-                                border-radius:8px;
-                                display:inline-block;
+                            <td align="center" style="padding:28px 0;">
+                              <table cellpadding="0" cellspacing="0" style="
+                                background-color:#020617;
+                                border:2px dashed #38bdf8;
+                                border-radius:12px;
                               ">
-                                %s
+                                <tr>
+                                  <td style="
+                                    padding:18px 34px;
+                                    font-size:30px;
+                                    font-weight:700;
+                                    letter-spacing:8px;
+                                    color:#38bdf8;
+                                    user-select:all;
+                                    text-align:center;
+                                  ">
+                                    {{OTP}}
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                
+                          <!-- COPY HINT -->
+                          <tr>
+                            <td align="center" style="padding-bottom:28px;">
+                              <div style="
+                                display:inline-block;
+                                background-color:#38bdf8;
+                                color:#020617;
+                                padding:12px 28px;
+                                border-radius:10px;
+                                font-size:14px;
+                                font-weight:600;
+                              ">
+                                Tap & Hold OTP to Copy
                               </div>
                             </td>
                           </tr>
-
+                
                           <!-- INFO -->
                           <tr>
-                            <td style="color:#475569;font-size:14px;">
-                              <p style="margin:0;">
+                            <td style="
+                              font-size:14px;
+                              color:#94a3b8;
+                              line-height:1.6;
+                              padding-bottom:30px;
+                            ">
+                              <p style="margin:0 0 8px;">
                                 ⏳ This OTP is valid for <strong>10 minutes</strong>.
                               </p>
-                              <p style="margin:12px 0 0;">
-                                If you didn’t request this, you can safely ignore this email.
+                              <p style="margin:0;">
+                                If you didn’t request this verification, please ignore this email.
                               </p>
                             </td>
                           </tr>
-
+                
                           <!-- FOOTER -->
                           <tr>
-                            <td style="padding-top:24px;border-top:1px solid #e2e8f0;">
-                              <p style="margin:0;font-size:12px;color:#64748b;">
-                                © 2026 ZypLink. All rights reserved.
-                              </p>
-                              <p style="margin:6px 0 0;font-size:12px;color:#64748b;">
-                                Simplifying link management with security and analytics.
-                              </p>
+                            <td style="
+                              border-top:1px solid #1e293b;
+                              padding-top:18px;
+                              text-align:center;
+                              font-size:12px;
+                              color:#64748b;
+                            ">
+                              © 2026 ZypLink. All rights reserved.
                             </td>
                           </tr>
-
-                          <!-- DEVELOPER SIGNATURE -->
+                
                           <tr>
-                            <td style="padding-top:14px;border-top:1px dashed #e2e8f0;">
-                              <p style="margin:0;font-size:12px;color:#475569;">
-                                Developed by <strong>Samarth Sharma</strong>
-                              </p>
-                              <p style="margin:6px 0 0;font-size:12px;">
-                                Contact:
-                                <a href="mailto:samarthsharma1211@gmail.com"
-                                   style="color:#2563eb;text-decoration:none;">
-                                  samarthsharma1211@gmail.com
-                                </a>
-                              </p>
+                            <td style="
+                              padding-top:8px;
+                              text-align:center;
+                              font-size:12px;
+                              color:#475569;
+                            ">
+                              Built with ❤️ by <strong>Samarth Sharma</strong>
                             </td>
                           </tr>
-
+                
                         </table>
-
+                        <!-- END CARD -->
+                
                       </td>
                     </tr>
                   </table>
+                
                 </body>
                 </html>
-                """.formatted(otp);
+                
+""".replace("{{OTP}}", otp);
 
+
+        try {
+            log.info("[EMAIL] Creating MIME message");
+
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(safeEmail);
+            helper.setFrom("zyplink1@gmail.com");
+            helper.setSubject("Your OTP Code");
             helper.setText(html, true);
-            helper.setFrom("ZypLink <no-reply@zyplink.com>");
 
-            mailSender.send(message);
+            log.info("[EMAIL] Sending OTP email to {}", safeEmail);
+            mailSender.send(mimeMessage);
 
-        } catch (MessagingException e) {
+            log.info(" [EMAIL] OTP email SENT successfully to {}", safeEmail);
+
+        } catch (Exception e) {
+
+            log.error(
+                " [EMAIL] FAILED to send OTP email to {} | Cause: {}",
+                safeEmail,
+                e.getMessage(),
+                e
+            );
+
             throw new RuntimeException("Failed to send OTP email", e);
         }
+    }
+
+    private String normalizeEmail(String email) {
+
+        if (email == null) {
+            throw new IllegalArgumentException("Email is null");
+        }
+
+        email = email.trim();
+
+        if (email.contains(",") || email.contains(" ")) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            throw new IllegalArgumentException("Invalid email address");
+        }
+
+        return email;
     }
 }

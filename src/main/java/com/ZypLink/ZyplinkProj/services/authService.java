@@ -1,6 +1,8 @@
 package com.ZypLink.ZyplinkProj.services;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+
 import org.springframework.security.authentication.AuthenticationManager;
 
 import org.springframework.security.authentication.DisabledException;
@@ -55,8 +57,8 @@ public class authService {
                 .password(securityConfig.passwordEncoder().encode(user.getPassword()))
                 .role(user.getRole())
                 .otp(otp)
-                .createdAt(LocalDateTime.now())
-                .otpExpiry(LocalDateTime.now().plusMinutes(10))
+                .createdAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")))
+                .otpExpiry(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).plusMinutes(10))
                 .enabled(false)
                 .build();
 
@@ -111,7 +113,7 @@ public class authService {
             throw new RuntimeException("Invalid OTP");
         }
 
-        if (user.getOtpExpiry().isBefore(LocalDateTime.now())) {
+        if (user.getOtpExpiry().isBefore(LocalDateTime.now(ZoneId.of("Asia/Kolkata")))) {
             throw new RuntimeException("OTP expired");
         }
 

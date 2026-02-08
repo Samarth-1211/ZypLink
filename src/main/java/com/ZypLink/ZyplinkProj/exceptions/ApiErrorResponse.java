@@ -1,5 +1,6 @@
 package com.ZypLink.ZyplinkProj.exceptions;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,7 +23,7 @@ public class ApiErrorResponse {
         this.status = status;
         this.error = error;
         this.message = message;
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
     }
 
     public int getStatus() {

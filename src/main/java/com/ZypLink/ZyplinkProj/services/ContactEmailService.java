@@ -1,14 +1,13 @@
 package com.ZypLink.ZyplinkProj.services;
 
-import jakarta.mail.MessagingException;
+import com.ZypLink.ZyplinkProj.dto.ContactRequest;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import com.ZypLink.ZyplinkProj.dto.ContactRequest;
 
 @Service
 public class ContactEmailService {
@@ -16,26 +15,32 @@ public class ContactEmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
-    private String adminEmail;
+    // Admin / Receiver email (can be same as Brevo sender)
+    private static final String ADMIN_EMAIL = "zyplink1@gmail.com";
 
+    @Async
     public void sendContactMessage(ContactRequest request) {
 
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
 
-            helper.setTo(adminEmail);
-            helper.setFrom(adminEmail);                 // must be your Gmail
-            helper.setReplyTo(request.getEmail());     // reply goes to user
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(ADMIN_EMAIL);
+            helper.setFrom(new InternetAddress(
+                    "zyplink1@gmail.com", "ZypLink Contact"));
+            helper.setReplyTo(request.getEmail()); // 👈 reply goes to user
             helper.setSubject("📩 New Contact Message — ZypLink");
 
-            helper.setText(buildHtmlBody(request), true); // true = HTML
+            String htmlBody = buildHtmlBody(request);
 
-            mailSender.send(message);
+            helper.setText(htmlBody, true); // true = HTML
 
-        } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send contact email");
+            mailSender.send(mimeMessage);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send contact email", e);
         }
     }
 

@@ -5,6 +5,7 @@ import java.net.URL;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +105,7 @@ public UrlMappingDTO shortTheUrl(ShortenUrlRequestDTO urlContent, Principal prin
         entity.setShortUrl(RandomshortUrl);
         entity.setUser(user);
         entity.setClickCount(0);
-        entity.setCreatedAt(LocalDateTime.now());
+        entity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
     
         UrlMappingDTO dto =
                 mapper.map(urlMappingRepo.save(entity), UrlMappingDTO.class);
@@ -192,7 +193,7 @@ public UrlMappingDTO shortTheUrl(ShortenUrlRequestDTO urlContent, Principal prin
         IpApiResponse location = ipAPIService.getLocationByIp(clientIpaddr);
 
         ClickEvents clickEvent = new ClickEvents();
-        clickEvent.setClickDate(LocalDateTime.now());
+        clickEvent.setClickDate(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
         clickEvent.setUrlMapping(mapping);
        
 
@@ -284,7 +285,7 @@ public UrlMappingDTO shortTheUrl(ShortenUrlRequestDTO urlContent, Principal prin
         entity.setShortUrl(validatedcustumSlug);
         entity.setUser(user);
         entity.setClickCount(0);
-        entity.setCreatedAt(LocalDateTime.now());
+        entity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
         return mapper.map(urlMappingRepo.save(entity), UrlMappingDTO.class);
     }
 
